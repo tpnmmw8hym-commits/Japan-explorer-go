@@ -1,168 +1,255 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Japan Explorer — Muchan_official</title>
-<meta name="description" content="Japan Explorer — discover Pokémon Centers, TeamLab, matcha, mochi workshops, food & activities. Built for Muchan_official." />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Japan by Muchan</title>
 
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""/>
+<!-- Leaflet Map CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css"
+/>
 
-<!-- MarkerCluster CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<!-- Leaflet Map JS -->
+<script src="https://unpkg.com/leaflet@1.9.2/dist/leaflet.js"></script>
 
 <style>
-/* ========== Theme & Layout (Modern, mobile-first) ========== */
-:root{
-  --bg:#fbfafb;
-  --card:#fff;
-  --muted:#6b7280;
-  --accent:#e60012; /* Japan red */
-  --accent-2:#ff5252;
-  --success:#10b981;
-  --radius:16px;
-  --shadow:0 10px 30px rgba(13,38,71,0.08);
-  --glass: rgba(255,255,255,0.6);
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+/* ======== GLOBAL THEME ======== */
+:root {
+  --bg: #fafafa;
+  --text: #111;
+  --soft: #777;
+  --card: rgba(255, 255, 255, 0.7);
+  --blur: blur(12px);
+  --radius: 18px;
+  --accent: #e60012; /* Japan red */
 }
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;background:var(--bg);color:#0b1220;-webkit-font-smoothing:antialiased;overflow-x: hidden;}
-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--card);box-shadow:var(--shadow);position:sticky;top:0;z-index:1000;border-bottom-left-radius:12px;border-bottom-right-radius:12px}
-.brand{display:flex;align-items:center;gap:12px}
-.logo{height:46px;width:46px;border-radius:50%;background:linear-gradient(135deg,#fff 0,#ffecec 100%);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:20px}
-.header-title{font-weight:800;font-size:16px}
-.tagline{font-size:12px;color:var(--muted)}
 
-/* Map */
-#map{height:56vh;width:100%;border-radius:0 0 14px 14px;display:block;position:relative;z-index:1;}
-
-/* Add loading indicator for map */
-.map-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:500;color:var(--muted);font-size:14px;}
-
-/* Floating search */
-.floating-search{position:fixed;left:50%;transform:translateX(-50%);top:86px;width:88%;max-width:820px;background:var(--card);padding:12px;border-radius:14px;box-shadow:0 10px 30px rgba(2,6,23,0.08);z-index:1100;display:flex;gap:8px;align-items:center}
-.floating-search input{flex:1;padding:12px;border-radius:12px;border:1px solid #eef2f6;font-size:15px}
-.floating-search .btn{padding:10px 12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:700}
-
-/* Panels */
-.main-wrap{max-width:1100px;margin:12px auto;padding:12px}
-.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;margin-bottom:8px}
-.select, .input{padding:12px;border-radius:12px;border:1px solid #eef2f6;background:var(--card);min-width:120px}
-.left-col{width:100%;}
-
-/* Place cards */
-.places-grid{display:grid;grid-template-columns:repeat(1,1fr);gap:12px;margin-top:10px}
-.place-card{background:var(--card);border-radius:14px;padding:12px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:flex-start}
-.place-card .thumb{width:92px;height:72px;border-radius:8px;background:#f3f4f6;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--muted)}
-.place-card h3{margin:0;font-size:16px}
-.place-card p{margin:6px 0 0;color:var(--muted);font-size:13px}
-.place-card .actions{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
-
-/* Bottom nav */
-.bottom-nav{position:fixed;left:0;right:0;bottom:12px;display:flex;justify-content:space-around;gap:8px;padding:10px 18px;max-width:760px;margin:0 auto;z-index:1200}
-.bottom-nav button{flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;font-weight:800;box-shadow:0 8px 20px rgba(230,0,18,0.12)}
-
-/* Admin / modal */
-.modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:none;align-items:center;justify-content:center;z-index:2000;padding:12px}
-.modal{width:100%;max-width:980px;background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow);max-height:86vh;overflow:auto}
-.textarea{width:100%;height:360px;border-radius:10px;border:1px solid #eef2f6;padding:8px;font-family:monospace}
-
-/* utility */
-.small{font-size:13px;color:var(--muted)}
-.badge{padding:6px 8px;border-radius:999px;background:#fff6f6;color:var(--accent);font-weight:700}
-.btn{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity 0.2s;}
-.btn:hover{opacity:0.9;}
-
-/* responsive */
-@media(min-width:900px){
-  .places-grid{grid-template-columns:repeat(2,1fr)}
-  .floating-search{top:100px}
+/* DARK MODE */
+.dark {
+  --bg: #0e0e11;
+  --text: #f5f5f5;
+  --soft: #bbb;
+  --card: rgba(25, 25, 25, 0.5);
 }
-@media(min-width:1200px){
-  .places-grid{grid-template-columns:repeat(3,1fr)}
+
+/* ======== BODY ======== */
+body {
+  margin: 0;
+  background: var(--bg);
+  font-family: "Inter", sans-serif;
+  color: var(--text);
 }
-.dark{background:#071124;color:#e6f0ff}
-.dark header{background:#071727}
-.dark .floating-search{background:rgba(4,18,28,0.85);border:1px solid rgba(255,255,255,0.03)}
-.dark .place-card{background:#091826;box-shadow:none}
+
+/* ======== HEADER ======== */
+header {
+  text-align: center;
+  padding: 20px 0;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+/* ======== MAP ======== */
+#map {
+  height: 55vh;
+  width: 100%;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+
+/* ======== FLOATING SEARCH ======== */
+.search-box {
+  position: fixed;
+  top: 85px;
+  width: 85%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card);
+  backdrop-filter: var(--blur);
+  padding: 14px;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 999;
+}
+.search-box input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 16px;
+}
+
+/* ======== DARK MODE BUTTON ======== */
+.dark-toggle {
+  position: fixed;
+  top: 95px;
+  right: 20px;
+  font-size: 22px;
+  background: var(--card);
+  padding: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: var(--blur);
+  z-index: 999;
+}
+
+/* ======== CONTAINER ======== */
+.container {
+  padding: 20px;
+}
+
+/* ======== DROPDOWN ======== */
+select {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: 1px solid #ddd;
+  background: var(--card);
+  font-size: 16px;
+  backdrop-filter: var(--blur);
+}
+
+/* ======== PLACE CARDS ======== */
+.place-card {
+  background: var(--card);
+  backdrop-filter: var(--blur);
+  padding: 18px;
+  border-radius: var(--radius);
+  margin-bottom: 18px;
+}
+
+/* ======== BUTTONS ======== */
+.btn {
+  background: var(--accent);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+  display: inline-block;
+  text-decoration: none;
+  margin-top: 8px;
+}
 </style>
 </head>
+
 <body>
 
-<header>
-  <div class="brand">
-    <div class="logo">M</div>
-    <div>
-      <div class="header-title">Japan Explorer</div>
-      <div class="tagline">by Muchan_official — Food • Pokémon • Matcha • TeamLab</div>
-    </div>
-  </div>
+<header>🇯🇵 Japan by Muchan</header>
 
-  <div style="display:flex;gap:8px;align-items:center">
-    <button id="manageBtn" class="badge" title="Manage data">Manage Data</button>
-    <div style="width:8px"></div>
-    <div class="small">@Muchan_official</div>
-  </div>
-</header>
-
-<!-- Floating search -->
-<div class="floating-search" role="search">
-  <input id="globalSearch" placeholder="Search: Pokémon, TeamLab, matcha, mochi, food, city..." aria-label="Search places"/>
-  <button class="btn" id="openAdmin">Admin</button>
+<!-- Search box -->
+<div class="search-box">
+  <input id="search" placeholder="Search: Pokémon, TeamLab, Food…" />
 </div>
+
+<!-- Dark mode -->
+<div class="dark-toggle" onclick="toggleDark()">🌙</div>
 
 <!-- Map -->
-<div id="map" aria-label="Japan map">
-  <div class="map-loading">Loading map...</div>
+<div id="map"></div>
+
+<div class="container">
+  <select id="filter">
+    <option value="">All Categories</option>
+    <option value="pokemon">Pokémon Centers</option>
+    <option value="tealab">TeamLab</option>
+    <option value="food">Food</option>
+    <option value="matcha">Matcha Ceremony</option>
+    <option value="mochi">Mochi Workshop</option>
+    <option value="activity">Activities</option>
+  </select>
+
+  <h2>Results</h2>
+  <div id="list"></div>
 </div>
 
-<!-- Main content -->
-<div class="main-wrap">
-  <div class="controls">
-    <select id="categoryFilter" class="select">
-      <option value="">All categories</option>
-    </select>
+<script>
+/* ======== MAP ======== */
+var map = L.map("map").setView([36.2048, 138.2529], 5);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-    <select id="prefFilter" class="select">
-      <option value="">All prefectures</option>
-    </select>
+/* ======== DATA (Sample) ======== */
+const places = [
+  {
+    name: "Pokémon Center Shibuya",
+    lat: 35.6595,
+    lng: 139.7005,
+    category: "pokemon",
+    desc: "One of the coolest Pokémon centers!",
+  },
+  {
+    name: "TeamLab Planets Tokyo",
+    lat: 35.6434,
+    lng: 139.787,
+    category: "tealab",
+    desc: "Walk through water & digital art.",
+  },
+  {
+    name: "Dotonbori Takoyaki",
+    lat: 34.6687,
+    lng: 135.5011,
+    category: "food",
+    desc: "Osaka’s famous street food.",
+  },
+  {
+    name: "Kyoto Matcha Ceremony",
+    lat: 34.99,
+    lng: 135.78,
+    category: "matcha",
+    desc: "Traditional tea ceremony.",
+  },
+];
 
-    <button id="clearFilters" class="select">Clear</button>
-    <button id="exportCsv" class="select">Export CSV</button>
-    <button id="importBtn" class="select">Import JSON/CSV</button>
-  </div>
+/* ======== MAP MARKERS ======== */
+let markers = [];
 
-  <div class="places-grid" id="placesGrid" aria-live="polite"></div>
-</div>
+function loadMarkers(list) {
+  markers.forEach((m) => map.removeLayer(m));
+  markers = [];
 
-<!-- Bottom nav -->
-<div class="bottom-nav">
-  <button onclick="window.scrollTo({top:0,behavior:'smooth'})">🏠 Home</button>
-  <button onclick="map.setView([35.6762,139.6503],5)">🗺️ Map</button>
-  <button onclick="document.querySelector('#categoryFilter').scrollIntoView({behavior:'smooth'})">📂 Categories</button>
-</div>
+  list.forEach((p) => {
+    let m = L.marker([p.lat, p.lng])
+      .addTo(map)
+      .bindPopup(`<b>${p.name}</b><br>${p.desc}`);
+    markers.push(m);
+  });
+}
 
-<!-- Admin modal -->
-<div class="modal-backdrop" id="modal">
-  <div class="modal" role="dialog" aria-modal="true">
-    <h3>Manage Places (JSON) — Admin</h3>
-    <div class="small">Edit the JSON array of places. Minimal fields: id,name,lat,lng,city,prefecture,category,description. Save to update map.</div>
-    <textarea id="jsonEditor" class="textarea" aria-label="JSON editor"></textarea>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button id="saveJson" class="select">Save</button>
-      <button id="downloadJson" class="select">Download JSON</button>
-      <button id="closeModal" class="select">Close</button>
-      <button id="resetSample" class="select">Reset Sample</button>
-    </div>
-  </div>
-</div>
+/* ======== FILTER + SEARCH ======== */
+function refreshList() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const cat = document.getElementById("filter").value;
 
-<!-- Hidden file input for import -->
-<input type="file" id="fileInput" accept=".json,.csv,text/csv" style="display:none"/>
+  const filtered = places.filter(
+    (p) =>
+      p.name.toLowerCase().includes(q) &&
+      (cat === "" || p.category === cat)
+  );
 
-<!-- Leaflet JS + MarkerCluster -->
-<script src="https://unpkg.com/leaflet@1
+  loadMarkers(filtered);
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  filtered.forEach((p) => {
+    list.innerHTML += `
+      <div class="place-card">
+        <h3>${p.name}</h3>
+        <p>${p.desc}</p>
+        <a class="btn" href="https://maps.google.com/?q=${p.lat},${p.lng}" target="_blank">Open in Maps</a>
+      </div>
+    `;
+  });
+}
+
+refreshList();
+
+document.getElementById("search").oninput = refreshList;
+document.getElementById("filter").onchange = refreshList;
+
+/* ======== DARK MODE ======== */
+function toggleDark() {
+  document.body.classList.toggle("dark");
+}
+</script>
+
+</body>
+</html>
