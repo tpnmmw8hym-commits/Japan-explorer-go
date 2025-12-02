@@ -7,7 +7,9 @@
 <meta name="description" content="Japan Explorer — discover Pokémon Centers, TeamLab, matcha, mochi workshops, food & activities. Built for Muchan_official." />
 
 <!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
 
 <!-- MarkerCluster CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
@@ -28,15 +30,18 @@
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;background:var(--bg);color:#0b1220;-webkit-font-smoothing:antialiased}
-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--card);box-shadow:var(--shadow);position:sticky;top:0;z-index:999;border-bottom-left-radius:12px;border-bottom-right-radius:12px}
+html,body{height:100%;margin:0;background:var(--bg);color:#0b1220;-webkit-font-smoothing:antialiased;overflow-x: hidden;}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--card);box-shadow:var(--shadow);position:sticky;top:0;z-index:1000;border-bottom-left-radius:12px;border-bottom-right-radius:12px}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{height:46px;width:46px;border-radius:50%;background:linear-gradient(135deg,#fff 0,#ffecec 100%);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:20px}
 .header-title{font-weight:800;font-size:16px}
 .tagline{font-size:12px;color:var(--muted)}
 
 /* Map */
-#map{height:56vh;width:100%;border-radius:0 0 14px 14px;display:block;}
+#map{height:56vh;width:100%;border-radius:0 0 14px 14px;display:block;position:relative;z-index:1;}
+
+/* Add loading indicator for map */
+.map-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:500;color:var(--muted);font-size:14px;}
 
 /* Floating search */
 .floating-search{position:fixed;left:50%;transform:translateX(-50%);top:86px;width:88%;max-width:820px;background:var(--card);padding:12px;border-radius:14px;box-shadow:0 10px 30px rgba(2,6,23,0.08);z-index:1100;display:flex;gap:8px;align-items:center}
@@ -69,6 +74,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 /* utility */
 .small{font-size:13px;color:var(--muted)}
 .badge{padding:6px 8px;border-radius:999px;background:#fff6f6;color:var(--accent);font-weight:700}
+.btn{padding:8px 12px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity 0.2s;}
+.btn:hover{opacity:0.9;}
 
 /* responsive */
 @media(min-width:900px){
@@ -109,7 +116,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 </div>
 
 <!-- Map -->
-<div id="map" aria-label="Japan map"></div>
+<div id="map" aria-label="Japan map">
+  <div class="map-loading">Loading map...</div>
+</div>
 
 <!-- Main content -->
 <div class="main-wrap">
@@ -156,319 +165,4 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 <input type="file" id="fileInput" accept=".json,.csv,text/csv" style="display:none"/>
 
 <!-- Leaflet JS + MarkerCluster -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-
-<script>
-/* =========================
-   Japan Explorer — Main JS
-   Single-file app, editable data
-   ========================= */
-
-const TIKTOK_HANDLE = "@Muchan_official";
-
-/* Utility helpers */
-function uid(){ return 'id' + Math.random().toString(36).slice(2,9); }
-function downloadFile(name, text){ const blob=new Blob([text],{type:'application/octet-stream'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url); }
-function escapeHtml(s){ if (s==null) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function validNumber(n){ return typeof n === 'number' && isFinite(n) && Math.abs(n) < 1000; }
-
-/* Map initialization */
-const map = L.map('map', {minZoom:3, maxZoom:19}).setView([36.2048, 138.2529], 5);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
-const markerGroup = L.markerClusterGroup({chunkedLoading:true});
-map.addLayer(markerGroup);
-
-/* ========== Sample places (curated) ===========
-   Each place: id, name, lat, lng, city, prefecture, category, description, tags[], image, affiliate, pokemon_center
-   You can edit via Manage Data modal (JSON).
-============================================= */
-
-const SAMPLE_PLACES = [
-  { id:'pokecenter_tokyo_dx', name:'Pokémon Center TOKYO DX', lat:35.6695, lng:139.7626, city:'Chiyoda', prefecture:'Tokyo', category:'pokemon', description:'Official Pokémon Center & café — great for merch and booster boxes.', tags:['pokemon','shop','tokyo'], image:'', affiliate:'', pokemon_center:true },
-  { id:'pokecenter_shibuya', name:'Pokémon Center Shibuya', lat:35.6595, lng:139.7005, city:'Shibuya', prefecture:'Tokyo', category:'pokemon', description:'Pokémon Center in Shibuya with seasonal items.', tags:['pokemon','shibuya'], image:'', affiliate:'', pokemon_center:true },
-  { id:'teamlab_planets', name:'teamLab Planets', lat:35.6261, lng:139.7817, city:'Toyosu', prefecture:'Tokyo', category:'fun', description:'Walk-through water-based immersive installations — viral on social.', tags:['teamlab','planets'], image:'', affiliate:'' },
-  { id:'teamlab_borderless', name:'teamLab Borderless', lat:35.6269, lng:139.7769, city:'Odaiba', prefecture:'Tokyo', category:'fun', description:'Large interactive digital art museum (check current exhibition).', tags:['teamlab','borderless'], image:'', affiliate:'' },
-  { id:'shibuya_crossing', name:'Shibuya Crossing', lat:35.6595, lng:139.7005, city:'Shibuya', prefecture:'Tokyo', category:'attraction', description:'Iconic scramble crossing — great for short-form videos.', tags:['shibuya','crossing'], image:'', affiliate:'' },
-  { id:'sensoji_asakusa', name:'Senso-ji (Asakusa)', lat:35.7148, lng:139.7967, city:'Asakusa', prefecture:'Tokyo', category:'culture', description:'Historic temple and Nakamise shopping street.', tags:['temple','asakusa'], image:'', affiliate:'' },
-  { id:'akihabara_elec', name:'Akihabara Electric Town', lat:35.6984, lng:139.7730, city:'Akihabara', prefecture:'Tokyo', category:'anime', description:'Arcades, anime shops, card stores and gachapon heaven.', tags:['akihabara','anime'], image:'', affiliate:'' },
-  { id:'ueno_park', name:'Ueno Park', lat:35.7138, lng:139.7745, city:'Ueno', prefecture:'Tokyo', category:'culture', description:'Museums, zoo and sakura in spring.', tags:['ueno','museum'], image:'', affiliate:'' },
-  { id:'ichiran_shibuya', name:'Ichiran Ramen (Shibuya)', lat:35.6590, lng:139.6993, city:'Shibuya', prefecture:'Tokyo', category:'food', description:'Famous ramen chain with solo booths.', tags:['ramen','food'], image:'', affiliate:'' },
-  { id:'nakano_broadway', name:'Nakano Broadway', lat:35.7074, lng:139.6646, city:'Nakano', prefecture:'Tokyo', category:'anime', description:'Collectibles, vintage anime goods and card shops.', tags:['nakano','collectibles'], image:'', affiliate:'' },
-  { id:'tokyo_station_ramen', name:'Tokyo Station Ramen Street', lat:35.6812, lng:139.7671, city:'Chiyoda', prefecture:'Tokyo', category:'food', description:'Multiple famous ramen counters inside Tokyo Station.', tags:['ramen','station'], image:'', affiliate':'' },
-  { id:'hakone_onsen', name:'Hakone Onsen Area', lat:35.2428, lng:139.1063, city:'Hakone', prefecture:'Kanagawa', category:'onsen', description:'Hot springs and ryokan with views of Mt. Fuji on clear days.', tags:['onsen','hakone'], image:'', affiliate:'' },
-  { id:'dotonbori', name:'Dotonbori (Osaka)', lat:34.6687, lng:135.5011, city:'Namba', prefecture:'Osaka', category:'food', description:'Bustling food street — takoyaki, okonomiyaki and neon signs.', tags:['osaka','food'], image:'', affiliate:'' },
-  { id:'universal_osaka', name:'Universal Studios Japan', lat:34.6654, lng:135.4300, city:'Konohana', prefecture:'Osaka', category:'attraction', description:'Major theme park with seasonal events.', tags:['usj','themepark'], image:'', affiliate:'' },
-  { id:'kuromon', name:'Kuromon Market', lat:34.6698, lng:135.5031, city:'Chuo', prefecture:'Osaka', category:'food', description:'Fresh seafood and street snacks.', tags:['market','osaka'], image:'', affiliate:'' },
-  { id:'fushimi_inari', name:'Fushimi Inari Taisha', lat:34.9671, lng:135.7727, city:'Fushimi', prefecture:'Kyoto', category:'culture', description:'Thousand torii gates — sunrise or early morning is best.', tags:['kyoto','shrine'], image:'', affiliate:'' },
-  { id:'gion', name:'Gion (Kyoto)', lat:35.0037, lng:135.7788, city:'Gion', prefecture:'Kyoto', category:'local', description:'Historical geisha district and tea houses.', tags:['gion','kyoto'], image:'', affiliate:'' },
-  { id:'kinkakuji', name:'Kinkaku-ji (Golden Pavilion)', lat:35.0394, lng:135.7292, city:'Kita', prefecture:'Kyoto', category:'sightseeing', description:'The famous gold-covered temple.', tags:['kyoto','temple'], image:'', affiliate:'' },
-  { id:'arashiyama', name:'Arashiyama Bamboo Grove', lat:35.0094, lng:135.6660, city:'Arashiyama', prefecture:'Kyoto', category:'sightseeing', description:'Famous bamboo grove walkway.', tags:['bamboo','kyoto'], image:'', affiliate:'' },
-  { id:'kyoto_matcha', name:'Matcha Ceremony (Gion)', lat:35.0037, lng:135.7788, city:'Gion', prefecture:'Kyoto', category:'matcha', description:'Traditional tea ceremony experiences in Kyoto.', tags:['matcha','tea'], image:'', affiliate:'' },
-  { id:'nara_park', name:'Nara Park', lat:34.6851, lng:135.8050, city:'Nara', prefecture:'Nara', category:'sightseeing', description:'Friendly deer and temples like Todai-ji.', tags:['nara','deer'], image:'', affiliate:'' },
-  { id:'hiroshima_peace', name:'Hiroshima Peace Memorial Park', lat:34.3853, lng:132.4553, city:'Hiroshima', prefecture:'Hiroshima', category:'culture', description:'Peace museum and memorial.', tags:['hiroshima','peace'], image:'', affiliate:'' },
-  { id:'miyajima', name:'Itsukushima Shrine (Miyajima)', lat:34.2950, lng:132.3190, city:'Miyajima', prefecture:'Hiroshima', category:'sightseeing', description:'Iconic floating torii gate.', tags:['miyajima','torii'], image:'', affiliate:'' },
-  { id:'sapporo_snow', name:'Sapporo Snow Festival (seasonal)', lat:43.0642, lng:141.3469, city:'Sapporo', prefecture:'Hokkaido', category:'attraction', description:'Winter ice sculptures and events.', tags:['sapporo','festival'], image:'', affiliate:'' },
-  { id:'hakata_ramen', name:'Hakata Ramen District', lat:33.5904, lng:130.4017, city:'Hakata', prefecture:'Fukuoka', category:'food', description:'Tonkotsu ramen specialty area.', tags:['ramen','fukuoka'], image:'', affiliate:'' },
-  { id:'beppu', name:'Beppu Onsen', lat:33.2786, lng:131.5001, city:'Beppu', prefecture:'Oita', category:'onsen', description:'Famous hot springs and the “hells” tour.', tags:['beppu','onsen'], image:'', affiliate:'' },
-  { id:'takayama_old', name:'Takayama Old Town', lat:36.1408, lng:137.2529, city:'Takayama', prefecture:'Gifu', category:'local', description:'Traditional town and markets.', tags:['takayama','history'], image:'', affiliate:'' },
-  { id:'kanazawa_teahouse', name:'Kanazawa Tea House (local)', lat:36.5613, lng:136.6562, city:'Kanazawa', prefecture:'Ishikawa', category:'local', description:'Local tea house with regional sweets.', tags:['kanazawa','tea'], image:'', affiliate:'' },
-  { id:'nakano_broadway_cards', name:'Nakano Broadway (Cards & Anime)', lat:35.7074, lng:139.6646, city:'Nakano', prefecture:'Tokyo', category:'cards', description:'Card shops, collectors and vintage anime goods.', tags:['cards','nakano'], image:'', affiliate:'' },
-  { id:'akihabara_cards', name:'Akihabara Card Shops', lat:35.6984, lng:139.7730, city:'Akihabara', prefecture:'Tokyo', category:'cards', description:'Multiple TCG stores selling singles and booster boxes.', tags:['cards','akihabara'], image:'', affiliate:'' },
-  { id:'teamlab_kyoto', name:'teamLab Kyoto (exhibitions)', lat:35.0116, lng:135.7681, city:'Kyoto', prefecture:'Kyoto', category:'fun', description:'teamLab rotating exhibitions in Kyoto area.', tags:['teamlab','kyoto'], image:'', affiliate:'' },
-  { id:'onigiri_local', name:'Hidden Onigiri Shop (Local)', lat:35.6768, lng:139.6504, city:'Tokyo', prefecture:'Tokyo', category:'local', description:'Small neighborhood shop with handmade onigiri.', tags:['food','local'], image:'', affiliate:'' },
-  { id:'kanazawa_crafts', name:'Kanazawa Crafts & Wajima', lat:36.5613, lng:136.6562, city:'Kanazawa', prefecture:'Ishikawa', category:'culture', description:'Traditional crafts, gold leaf and tea.', tags:['crafts','kanazawa'], image:'', affiliate:'' }
-];
-
-/* Persistence: try load from localStorage, else use SAMPLE_PLACES */
-const STORAGE_KEY = 'jp_explorer_places_v1';
-let PLACES = (function load(){
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length) return parsed;
-    }
-  } catch(e){}
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(SAMPLE_PLACES));
-  return JSON.parse(JSON.stringify(SAMPLE_PLACES));
-})();
-
-/* Add markers from array */
-function clearMarkers(){ markerGroup.clearLayers(); }
-function addMarkers(list){
-  clearMarkers();
-  list.forEach(p=>{
-    if (!validNumber(Number(p.lat)) || !validNumber(Number(p.lng))) return;
-    try {
-      const marker = L.marker([p.lat,p.lng], {title:p.name});
-      const popup = document.createElement('div');
-      popup.style.maxWidth = '300px';
-      let html = `<h3 style="margin:0 0 6px">${escapeHtml(p.name)}</h3>`;
-      html += `<div style="color:${'#6b7280'};font-size:13px">${escapeHtml(p.city)} · ${escapeHtml(p.prefecture)} · ${escapeHtml(p.category)}</div>`;
-      html += `<p style="margin-top:8px;color:#111">${escapeHtml(p.description)}</p>`;
-      html += `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">`;
-      html += `<a class="btn" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank">Directions</a>`;
-      html += `<button class="btn" data-id="${escapeHtml(p.id)}" onclick="sharePlace('${escapeHtml(p.id)}')">Share</button>`;
-      if (p.affiliate) html += `<a class="btn" href="${escapeHtml(p.affiliate)}" target="_blank">Buy</a>`;
-      html += `</div>`;
-      marker.bindPopup(html);
-      marker.options.placeId = p.id;
-      markerGroup.addLayer(marker);
-    } catch(e){
-      console.warn('marker error', e, p);
-    }
-  });
-}
-
-/* Render list UI */
-const placesGrid = document.getElementById('placesGrid');
-function renderList(list){
-  placesGrid.innerHTML = '';
-  if (!list.length){
-    placesGrid.innerHTML = `<div class="small">No results. Try clearing filters.</div>`;
-    return;
-  }
-  list.forEach(p=>{
-    const card = document.createElement('div');
-    card.className = 'place-card';
-    const thumb = document.createElement('div'); thumb.className = 'thumb'; thumb.innerText = (p.category||'').slice(0,2).toUpperCase();
-    const meta = document.createElement('div'); meta.style.flex = '1';
-    const h = document.createElement('h3'); h.innerText = p.name;
-    const sub = document.createElement('div'); sub.className = 'small'; sub.innerText = `${p.city || ''} · ${p.prefecture || ''} · ${p.category || ''}`;
-    const desc = document.createElement('p'); desc.innerText = p.description || '';
-    const actions = document.createElement('div'); actions.className = 'actions';
-    const openNav = document.createElement('a'); openNav.className = 'btn'; openNav.href = `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`; openNav.target='_blank'; openNav.innerText = 'Open in Maps';
-    const shareBtn = document.createElement('button'); shareBtn.className = 'btn'; shareBtn.innerText = 'Share'; shareBtn.onclick = ()=> sharePlace(p.id);
-    actions.appendChild(openNav); actions.appendChild(shareBtn);
-    meta.appendChild(h); meta.appendChild(sub); meta.appendChild(desc); meta.appendChild(actions);
-    card.appendChild(thumb); card.appendChild(meta);
-    placesGrid.appendChild(card);
-  });
-}
-
-/* Filters and UI wiring */
-const categoryFilter = document.getElementById('categoryFilter');
-const prefFilter = document.getElementById('prefFilter');
-const globalSearch = document.getElementById('globalSearch');
-
-function populateFilters(){
-  const cats = Array.from(new Set(PLACES.map(p=>p.category).filter(Boolean))).sort();
-  categoryFilter.innerHTML = '<option value="">All categories</option>' + cats.map(c=>`<option value="${c}">${c[0].toUpperCase()+c.slice(1)}</option>`).join('');
-  const prefs = Array.from(new Set(PLACES.map(p=>p.prefecture).filter(Boolean))).sort();
-  prefFilter.innerHTML = '<option value="">All prefectures</option>' + prefs.map(p=>`<option value="${p}">${p}</option>`).join('');
-}
-
-function getFiltered(){
-  const q = (globalSearch.value || '').toLowerCase().trim();
-  const cat = categoryFilter.value;
-  const pref = prefFilter.value;
-  return PLACES.filter(p=>{
-    if (cat && p.category !== cat) return false;
-    if (pref && p.prefecture !== pref && p.city !== pref) return false;
-    if (!q) return true;
-    const hay = (p.name+' '+p.city+' '+p.prefecture+' '+(p.tags||[]).join(' ')+' '+p.description).toLowerCase();
-    return hay.includes(q);
-  });
-}
-
-function applyFilters(){
-  const filtered = getFiltered();
-  addMarkers(filtered);
-  renderList(filtered);
-}
-
-/* Share function — copies TikTok-ready caption */
-function sharePlace(id){
-  const base = window.location.href.split('#')[0];
-  const url = base + '#place=' + encodeURIComponent(id) + '&ref=muchan_official';
-  const p = PLACES.find(x=>x.id===id) || {name:'Place'};
-  const caption = `${p.name} — found on ${TIKTOK_HANDLE}\n${url}\n#Japan #Travel #${TIKTOK_HANDLE.replace('@','')}`;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(caption).then(()=> alert('Caption copied! Paste into TikTok.'));
-  } else {
-    prompt('Copy this caption', caption);
-  }
-}
-
-/* Deep-link handling (#place=id) */
-function handleHash(){
-  const h = location.hash.slice(1);
-  if (!h) return;
-  const params = new URLSearchParams(h.replace('?',''));
-  const pid = params.get('place');
-  if (pid){
-    const p = PLACES.find(x=>x.id === pid);
-    if (p && validNumber(Number(p.lat)) && validNumber(Number(p.lng))){
-      map.setView([p.lat,p.lng], 14);
-      setTimeout(()=> markerGroup.eachLayer(l => { if (l.options.placeId === pid) l.openPopup(); }), 400);
-    }
-  }
-}
-
-/* Manage Data modal (JSON editor) */
-const modal = document.getElementById('modal');
-const jsonEditor = document.getElementById('jsonEditor');
-document.getElementById('manageBtn').addEventListener('click', openManage);
-document.getElementById('openAdmin').addEventListener('click', openManage);
-
-function openManage(){
-  jsonEditor.value = JSON.stringify(PLACES, null, 2);
-  modal.style.display = 'flex';
-}
-document.getElementById('closeModal').addEventListener('click', ()=> modal.style.display = 'none');
-document.getElementById('saveJson').addEventListener('click', ()=> {
-  try {
-    const parsed = JSON.parse(jsonEditor.value);
-    if (!Array.isArray(parsed)) return alert('JSON must be an array of places');
-    // minimal validation
-    for (let i=0;i<parsed.length;i++){
-      const it = parsed[i];
-      if (!it.id) it.id = uid();
-      if (!validNumber(Number(it.lat)) || !validNumber(Number(it.lng))) return alert('Invalid lat/lng at item index '+i);
-    }
-    PLACES = parsed;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(PLACES));
-    populateFilters();
-    applyFilters();
-    modal.style.display = 'none';
-    alert('Saved ' + PLACES.length + ' places locally in your browser.');
-  } catch(e){ alert('Invalid JSON: ' + e.message); }
-});
-document.getElementById('downloadJson').addEventListener('click', ()=> { downloadFile('places.json', JSON.stringify(PLACES, null, 2)); });
-
-/* Reset sample - restore built-in sample */
-document.getElementById('resetSample').addEventListener('click', ()=> {
-  if (!confirm('Replace current list with built-in sample?')) return;
-  PLACES = JSON.parse(JSON.stringify(SAMPLE_PLACES));
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(PLACES));
-  populateFilters();
-  applyFilters();
-  alert('Restored sample places.');
-});
-
-/* Export CSV */
-document.getElementById('exportCsv').addEventListener('click', ()=>{
-  const headers = ['id','name','lat','lng','city','prefecture','category','description','tags','affiliate','pokemon_center'];
-  const rows = PLACES.map(p => headers.map(h=>{
-    const v = p[h];
-    if (Array.isArray(v)) return `"${v.join('|')}"`;
-    return `"${String(v||'').replace(/"/g,'""')}"`;
-  }).join(','));
-  const csv = headers.join(',') + '\n' + rows.join('\n');
-  downloadFile('places_export.csv', csv);
-});
-
-/* Import file */
-document.getElementById('importBtn').addEventListener('click', ()=> document.getElementById('fileInput').click());
-document.getElementById('fileInput').addEventListener('change', (ev)=>{
-  const f = ev.target.files[0]; if (!f) return;
-  const reader = new FileReader();
-  reader.onload = ()=> {
-    const text = reader.result;
-    try {
-      if (text.trim().startsWith('[') || text.trim().startsWith('{')){
-        const parsed = JSON.parse(text);
-        const arr = Array.isArray(parsed) ? parsed : [parsed];
-        let added = 0;
-        arr.forEach(it=>{
-          if (!it.id) it.id = uid();
-          if (!validNumber(Number(it.lat)) || !validNumber(Number(it.lng))) return;
-          PLACES.push(it); added++;
-        });
-        if (added){ localStorage.setItem(STORAGE_KEY, JSON.stringify(PLACES)); populateFilters(); applyFilters(); alert('Imported ' + added + ' items'); }
-        else alert('No valid items found to import.');
-      } else {
-        // attempt CSV parse (very basic)
-        const lines = text.split(/\r?\n/).filter(Boolean);
-        const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
-        let added = 0;
-        for (let i=1;i<lines.length;i++){
-          const cols = lines[i].split(',');
-          if (!cols.length) continue;
-          const obj = {};
-          headers.forEach((h, idx)=> obj[h] = cols[idx] ? cols[idx].trim().replace(/^"|"$/g,'') : '');
-          const lat = Number(obj.lat || obj.latitude || '');
-          const lng = Number(obj.lng || obj.longitude || '');
-          if (!validNumber(lat) || !validNumber(lng)) continue;
-          PLACES.push({ id: obj.id || uid(), name: obj.name || 'Imported', lat, lng, city: obj.city||'', prefecture: obj.prefecture||'', category: obj.category||'local', description: obj.description||'', tags: (obj.tags? obj.tags.split('|'):[]), affiliate: obj.affiliate || '', pokemon_center: (obj.pokemon_center==='true') });
-          added++;
-        }
-        if (added){ localStorage.setItem(STORAGE_KEY, JSON.stringify(PLACES)); populateFilters(); applyFilters(); alert('Imported ' + added + ' CSV rows'); }
-        else alert('No CSV rows imported');
-      }
-    } catch(e){ alert('Import failed: ' + e.message); }
-  };
-  reader.readAsText(f);
-  ev.target.value = '';
-});
-
-/* Filters events */
-globalSearch.addEventListener('input', applyFilters);
-categoryFilter.addEventListener('change', applyFilters);
-prefFilter.addEventListener('change', applyFilters);
-document.getElementById('clearFilters').addEventListener('click', ()=> {
-  globalSearch.value=''; categoryFilter.value=''; prefFilter.value=''; applyFilters();
-});
-
-/* Dark mode toggle */
-function toggleDark(){ document.body.classList.toggle('dark'); }
-window.toggleDark = toggleDark;
-
-/* Init UI and markers */
-populateFilters();
-applyFilters();
-handleHash();
-setTimeout(()=>{ const ls = document.getElementById('loading-screen'); if (ls) ls.style.display='none'; }, 1800);
-
-/* Expose small debug API on window */
-window.JAPAN_EXPLORER = {
-  getPlaces: ()=> JSON.parse(JSON.stringify(PLACES)),
-  setPlaces: (arr)=> { if (!Array.isArray(arr)) throw new Error('array required'); PLACES = arr; localStorage.setItem(STORAGE_KEY, JSON.stringify(PLACES)); populateFilters(); applyFilters(); }
-};
-
-console.log('Japan Explorer ready — Muchan_official');
-</script>
-
-</body>
-</html>
+<script src="https://unpkg.com/leaflet@1
