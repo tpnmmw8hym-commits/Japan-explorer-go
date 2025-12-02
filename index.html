@@ -100,19 +100,25 @@
             display: none;
         }
 
-        .mobile-menu-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-light);
-            font-size: 1.2rem;
-            padding: 0.5rem;
-            cursor: pointer;
+        .tiktok-badge {
+            background: #000;
+            color: white;
+            padding: 0.5rem 0.8rem;
+            border-radius: 30px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: var(--transition);
         }
 
-        /* ========== MOBILE LAYOUT ========== */
+        .tiktok-badge:hover {
+            background: #333;
+        }
+
+        /* ========== MAIN APP LAYOUT ========== */
         .app-container {
             height: 100vh;
             padding-top: 70px; /* Header height */
@@ -120,11 +126,11 @@
             flex-direction: column;
         }
 
-        /* ========== MAP CONTAINER ========== */
+        /* ========== MAP CONTAINER (FULL SCREEN) ========== */
         .map-container {
             flex: 1;
             position: relative;
-            height: 60vh;
+            height: 100%;
         }
 
         #map {
@@ -132,16 +138,73 @@
             height: 100%;
         }
 
+        /* ========== SIDEBAR PANEL (TOGGLEABLE) ========== */
+        .sidebar-panel {
+            position: fixed;
+            top: 70px;
+            right: -400px;
+            width: 350px;
+            height: calc(100vh - 70px);
+            background: var(--darker-bg);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-panel.open {
+            right: 0;
+        }
+
+        .panel-header {
+            padding: 1rem;
+            background: var(--card-bg);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h3 {
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .close-panel {
+            background: transparent;
+            border: none;
+            color: var(--text-gray);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.3rem;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 1rem;
+        }
+
         /* ========== MOBILE FILTERS BAR ========== */
         .mobile-filters {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
             background: var(--card-bg);
             padding: 0.8rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             white-space: nowrap;
             scrollbar-width: none;
+            z-index: 900;
         }
 
         .mobile-filters::-webkit-scrollbar {
@@ -173,25 +236,12 @@
             font-weight: 600;
         }
 
-        /* ========== PLACES LIST (MOBILE) ========== */
-        .places-list-container {
-            flex: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            background: var(--darker-bg);
-            padding: 1rem;
-        }
-
+        /* ========== PLACES LIST IN PANEL ========== */
         .places-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
-            position: sticky;
-            top: 0;
-            background: var(--darker-bg);
-            padding: 0.5rem 0;
-            z-index: 10;
         }
 
         .places-count {
@@ -203,7 +253,7 @@
             font-weight: 600;
         }
 
-        /* ========== MOBILE PLACE CARD ========== */
+        /* ========== PLACE CARD ========== */
         .place-card {
             background: var(--card-bg);
             border-radius: var(--radius);
@@ -360,69 +410,29 @@
             font-weight: 600;
         }
 
-        /* ========== MOBILE MODALS ========== */
-        .modal-overlay {
+        /* ========== TOGGLE BUTTON FOR SIDEBAR ========== */
+        .toggle-sidebar-btn {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: none;
+            bottom: 80px;
+            left: 15px;
+            z-index: 1000;
+            width: 50px;
+            height: 50px;
+            background: var(--primary-red);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
-            padding: 1rem;
-        }
-
-        .modal {
-            background: var(--darker-bg);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            max-width: 500px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(230, 0, 18, 0.3);
-        }
-
-        .modal h3 {
-            margin-bottom: 1rem;
-            color: var(--text-light);
             font-size: 1.2rem;
-        }
-
-        .modal p {
-            color: var(--text-gray);
-            margin-bottom: 1.5rem;
-            line-height: 1.5;
-            font-size: 0.9rem;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 0.8rem;
-        }
-
-        .modal-btn {
-            flex: 1;
-            padding: 0.8rem;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
             cursor: pointer;
+            box-shadow: var(--shadow);
             transition: var(--transition);
-            font-size: 0.9rem;
         }
 
-        .modal-btn.primary {
-            background: var(--primary-red);
-            color: white;
-        }
-
-        .modal-btn.primary:active {
+        .toggle-sidebar-btn:active {
+            transform: scale(0.95);
             background: var(--primary-red-light);
         }
 
@@ -489,6 +499,72 @@
             color: var(--text-gray);
         }
 
+        /* ========== MODALS ========== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+        }
+
+        .modal {
+            background: var(--darker-bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(230, 0, 18, 0.3);
+        }
+
+        .modal h3 {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-size: 1.2rem;
+        }
+
+        .modal p {
+            color: var(--text-gray);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 0.8rem;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .modal-btn.primary {
+            background: var(--primary-red);
+            color: white;
+        }
+
+        .modal-btn.primary:active {
+            background: var(--primary-red-light);
+        }
+
         /* ========== DESKTOP ADAPTATIONS ========== */
         @media (min-width: 768px) {
             .app-container {
@@ -500,10 +576,13 @@
                 flex: 2;
             }
             
-            .places-list-container {
-                flex: 1;
-                max-width: 400px;
-                padding: 1.5rem;
+            .sidebar-panel {
+                position: relative;
+                top: 0;
+                right: 0;
+                width: 350px;
+                height: 100%;
+                display: flex !important;
             }
             
             .mobile-bottom-nav {
@@ -514,10 +593,6 @@
                 display: block;
             }
             
-            .mobile-menu-btn {
-                display: none;
-            }
-            
             .mobile-search-container {
                 display: none !important;
             }
@@ -526,13 +601,8 @@
                 display: none;
             }
             
-            .desktop-sidebar {
-                display: block !important;
-                background: var(--darker-bg);
-                border-right: 1px solid rgba(255, 255, 255, 0.05);
-                padding: 1.5rem;
-                width: 300px;
-                overflow-y: auto;
+            .toggle-sidebar-btn {
+                display: none;
             }
         }
 
@@ -580,6 +650,22 @@
             background: transparent !important;
             border: none !important;
         }
+
+        /* ========== OVERLAY BACKDROP ========== */
+        .overlay-backdrop {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 998;
+            display: none;
+        }
+
+        .overlay-backdrop.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -592,9 +678,9 @@
                 <p>@Muchan_official • 150+ spots</p>
             </div>
         </div>
-        <button class="mobile-menu-btn" id="menuBtn">
-            <i class="fas fa-ellipsis-v"></i>
-        </button>
+        <a href="https://www.tiktok.com/@muchan_official?_r=1&_t=ZG-91sf9Jp4d0L" target="_blank" class="tiktok-badge">
+            <i class="fab fa-tiktok"></i> Follow
+        </a>
     </header>
 
     <!-- Mobile Search -->
@@ -610,6 +696,16 @@
         <!-- Map -->
         <div class="map-container">
             <div id="map"></div>
+            
+            <!-- Overlay Backdrop -->
+            <div class="overlay-backdrop" id="overlayBackdrop"></div>
+            
+            <!-- Toggle Sidebar Button -->
+            <button class="toggle-sidebar-btn" id="toggleSidebar">
+                <i class="fas fa-list"></i>
+            </button>
+            
+            <!-- Map Controls -->
             <div class="map-controls">
                 <button class="map-btn" id="locateMe" title="Locate me">
                     <i class="fas fa-location-crosshairs"></i>
@@ -641,17 +737,25 @@
             </div>
         </div>
 
-        <!-- Places List -->
-        <div class="places-list-container">
-            <div class="places-header">
+        <!-- Sidebar Panel (Toggleable) -->
+        <div class="sidebar-panel" id="sidebarPanel">
+            <div class="panel-header">
                 <h3><i class="fas fa-map-marker-alt"></i> Recommended Spots</h3>
-                <span id="placesCount" class="places-count">150+ places</span>
+                <button class="close-panel" id="closePanel">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <div id="placesContainer">
-                <!-- Places will load here -->
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    Loading Japan's best spots...
+            <div class="panel-content">
+                <div class="places-header">
+                    <h4>Filtered Results</h4>
+                    <span id="placesCount" class="places-count">150+ places</span>
+                </div>
+                <div id="placesContainer">
+                    <!-- Places will load here -->
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        Loading Japan's best spots...
+                    </div>
                 </div>
             </div>
         </div>
@@ -697,7 +801,9 @@
             </p>
             <div class="modal-buttons">
                 <button class="modal-btn primary" id="closeModal">Continue Exploring</button>
-                <button class="modal-btn secondary" onclick="window.open('https://tiktok.com/@Muchan_official', '_blank')">My TikTok</button>
+                <a href="https://www.tiktok.com/@muchan_official?_r=1&_t=ZG-91sf9Jp4d0L" target="_blank" class="modal-btn secondary" style="text-decoration: none; text-align: center;">
+                    My TikTok
+                </a>
             </div>
         </div>
     </div>
@@ -841,8 +947,11 @@
             
             // Show initial loading then hide
             setTimeout(() => {
-                document.getElementById('placesContainer').innerHTML = '';
-                renderPlacesList();
+                const placesContainer = document.getElementById('placesContainer');
+                if (placesContainer) {
+                    placesContainer.innerHTML = '';
+                    renderPlacesList();
+                }
             }, 500);
         }
 
@@ -874,9 +983,7 @@
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
             
-            // Add new markers with clustering
-            const markerGroup = L.layerGroup();
-            
+            // Add new markers
             filteredPlaces.forEach(place => {
                 const marker = L.marker([place.lat, place.lng], {
                     icon: getMarkerIcon(place.category)
@@ -907,13 +1014,15 @@
                 
                 marker.on('click', () => {
                     selectPlace(place.id);
+                    // Open sidebar when clicking on marker (mobile)
+                    if (window.innerWidth < 768) {
+                        toggleSidebar(true);
+                    }
                 });
                 
-                markerGroup.addLayer(marker);
+                marker.addTo(map);
                 markers.push(marker);
             });
-            
-            markerGroup.addTo(map);
         }
 
         function getMarkerIcon(category) {
@@ -972,6 +1081,8 @@
         // ========== UI FUNCTIONS ==========
         function renderPlacesList() {
             const container = document.getElementById('placesContainer');
+            if (!container) return;
+            
             if (filteredPlaces.length === 0) {
                 container.innerHTML = '<div style="text-align: center; color: var(--text-gray); padding: 2rem;">No places found. Try another filter.</div>';
                 return;
@@ -1019,7 +1130,10 @@
         }
 
         function updatePlacesCount() {
-            document.getElementById('placesCount').textContent = `${filteredPlaces.length} places`;
+            const placesCount = document.getElementById('placesCount');
+            if (placesCount) {
+                placesCount.textContent = `${filteredPlaces.length} places`;
+            }
         }
 
         function selectPlace(placeId) {
@@ -1028,7 +1142,7 @@
             
             if (place) {
                 // Center map on place
-                map.setView([place.lat, place.lng], 14);
+                map.setView([place.lat, place.lng], 15);
                 
                 // Open popup
                 markers.forEach(marker => {
@@ -1041,14 +1155,9 @@
                 // Update UI
                 renderPlacesList();
                 
-                // Scroll to card on mobile
+                // Open sidebar on mobile when selecting place
                 if (window.innerWidth < 768) {
-                    const card = document.querySelector(`[onclick="selectPlace('${placeId}')"]`);
-                    if (card) {
-                        setTimeout(() => {
-                            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 300);
-                    }
+                    toggleSidebar(true);
                 }
             }
         }
@@ -1074,6 +1183,29 @@
             addMarkersToMap();
             renderPlacesList();
             updatePlacesCount();
+        }
+
+        // ========== SIDEBAR FUNCTIONS ==========
+        function toggleSidebar(open) {
+            const sidebar = document.getElementById('sidebarPanel');
+            const overlay = document.getElementById('overlayBackdrop');
+            const toggleBtn = document.getElementById('toggleSidebar');
+            
+            if (open === undefined) {
+                open = !sidebar.classList.contains('open');
+            }
+            
+            if (open) {
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+                toggleBtn.innerHTML = '<i class="fas fa-times"></i>';
+                toggleBtn.style.background = '#3b82f6';
+            } else {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                toggleBtn.innerHTML = '<i class="fas fa-list"></i>';
+                toggleBtn.style.background = 'var(--primary-red)';
+            }
         }
 
         // ========== UTILITY FUNCTIONS ==========
@@ -1131,7 +1263,10 @@
         // ========== EVENT LISTENERS ==========
         function setupEventListeners() {
             // Search box
-            document.getElementById('searchBox').addEventListener('input', filterPlaces);
+            const searchBox = document.getElementById('searchBox');
+            if (searchBox) {
+                searchBox.addEventListener('input', filterPlaces);
+            }
             
             // Filter chips
             document.querySelectorAll('.filter-chip').forEach(btn => {
@@ -1140,7 +1275,25 @@
                     this.classList.add('active');
                     currentCategory = this.dataset.category;
                     filterPlaces();
+                    
+                    // Open sidebar when filtering on mobile
+                    if (window.innerWidth < 768) {
+                        toggleSidebar(true);
+                    }
                 });
+            });
+            
+            // Sidebar toggle
+            document.getElementById('toggleSidebar').addEventListener('click', () => {
+                toggleSidebar();
+            });
+            
+            document.getElementById('closePanel').addEventListener('click', () => {
+                toggleSidebar(false);
+            });
+            
+            document.getElementById('overlayBackdrop').addEventListener('click', () => {
+                toggleSidebar(false);
             });
             
             // Map controls
@@ -1171,11 +1324,9 @@
             document.getElementById('navMap').addEventListener('click', () => {
                 document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
                 document.getElementById('navMap').classList.add('active');
-                // Show map full screen on mobile
+                // Close sidebar on mobile
                 if (window.innerWidth < 768) {
-                    document.querySelector('.map-container').style.height = '70vh';
-                    document.querySelector('.places-list-container').style.display = 'none';
-                    document.querySelector('.mobile-filters').style.display = 'none';
+                    toggleSidebar(false);
                 }
             });
             
@@ -1196,9 +1347,13 @@
                 document.getElementById('affiliateModal').style.display = 'flex';
             });
             
-            // Menu button
-            document.getElementById('menuBtn').addEventListener('click', () => {
-                document.getElementById('affiliateModal').style.display = 'flex';
+            // Close search when clicking outside
+            document.addEventListener('click', (e) => {
+                const mobileSearch = document.getElementById('mobileSearch');
+                const navSearch = document.getElementById('navSearch');
+                if (mobileSearch && !e.target.closest('#mobileSearch') && !e.target.closest('#navSearch')) {
+                    mobileSearch.style.display = 'none';
+                }
             });
             
             // Modal close buttons
@@ -1210,18 +1365,14 @@
                 document.getElementById('shareModal').style.display = 'none';
             });
             
-            // Close search when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('#mobileSearch') && !e.target.closest('#navSearch')) {
-                    document.getElementById('mobileSearch').style.display = 'none';
-                }
-            });
-            
             // Handle deep linking
             if (window.location.hash) {
                 const placeId = window.location.hash.replace('#place=', '');
                 if (placeId && JAPAN_SPOTS.some(p => p.id === placeId)) {
-                    setTimeout(() => selectPlace(placeId), 1000);
+                    setTimeout(() => {
+                        selectPlace(placeId);
+                        toggleSidebar(true);
+                    }, 1000);
                 }
             }
             
@@ -1242,7 +1393,7 @@
                     shareUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
                     break;
                 case 'tiktok':
-                    // TikTok doesn't have direct share URL, copy to clipboard
+                    // Copy to clipboard for TikTok
                     navigator.clipboard.writeText(`${text}\n${url}`).then(() => {
                         alert('Link copied! Open TikTok and paste in your video description.');
                     });
@@ -1263,6 +1414,7 @@
         window.selectPlace = selectPlace;
         window.toggleFavorite = toggleFavorite;
         window.shareTo = shareTo;
+        window.toggleSidebar = toggleSidebar;
 
         // ========== INITIALIZE ==========
         document.addEventListener('DOMContentLoaded', initApp);
