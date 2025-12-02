@@ -1,255 +1,1396 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Japan by Muchan</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japan Explorer • @Muchan_official • Food • Pokémon • Matcha • TeamLab</title>
+    <meta name="description" content="Interactive Japan travel guide by @Muchan_official. Find Pokémon Centers, matcha ceremonies, mochi workshops, food spots, and viral social media locations.">
+    <meta name="keywords" content="Japan travel, Pokémon Center, matcha, mochi workshop, Tokyo food, Kyoto, Osaka, TeamLab, Muchan_official">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ========== ROOT VARIABLES ========== */
+        :root {
+            --primary-red: #e60012; /* Japan red */
+            --primary-red-light: #ff5252;
+            --dark-bg: #0f172a;
+            --darker-bg: #0a0f1f;
+            --card-bg: #1e293b;
+            --text-light: #f8fafc;
+            --text-gray: #94a3b8;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --radius: 16px;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --transition: all 0.3s ease;
+        }
 
-<!-- Leaflet Map CSS -->
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css"
-/>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<!-- Leaflet Map JS -->
-<script src="https://unpkg.com/leaflet@1.9.2/dist/leaflet.js"></script>
+        html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
 
-<style>
-/* ======== GLOBAL THEME ======== */
-:root {
-  --bg: #fafafa;
-  --text: #111;
-  --soft: #777;
-  --card: rgba(255, 255, 255, 0.7);
-  --blur: blur(12px);
-  --radius: 18px;
-  --accent: #e60012; /* Japan red */
-}
+        /* ========== HEADER ========== */
+        .header {
+            background: linear-gradient(135deg, var(--darker-bg) 0%, #1a1f3a 100%);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 2px solid var(--primary-red);
+        }
 
-/* DARK MODE */
-.dark {
-  --bg: #0e0e11;
-  --text: #f5f5f5;
-  --soft: #bbb;
-  --card: rgba(25, 25, 25, 0.5);
-}
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
 
-/* ======== BODY ======== */
-body {
-  margin: 0;
-  background: var(--bg);
-  font-family: "Inter", sans-serif;
-  color: var(--text);
-}
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-red-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.5rem;
+            color: white;
+            box-shadow: 0 4px 12px rgba(230, 0, 18, 0.3);
+        }
 
-/* ======== HEADER ======== */
-header {
-  text-align: center;
-  padding: 20px 0;
-  font-size: 26px;
-  font-weight: 700;
-}
+        .header-text h1 {
+            font-size: 1.4rem;
+            background: linear-gradient(90deg, #fff, var(--primary-red-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.2rem;
+        }
 
-/* ======== MAP ======== */
-#map {
-  height: 55vh;
-  width: 100%;
-  border-radius: 20px;
-  margin-bottom: 20px;
-}
+        .header-text p {
+            color: var(--text-gray);
+            font-size: 0.85rem;
+        }
 
-/* ======== FLOATING SEARCH ======== */
-.search-box {
-  position: fixed;
-  top: 85px;
-  width: 85%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--card);
-  backdrop-filter: var(--blur);
-  padding: 14px;
-  border-radius: var(--radius);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  z-index: 999;
-}
-.search-box input {
-  width: 100%;
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 16px;
-}
+        .tiktok-badge {
+            background: #000;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+        }
 
-/* ======== DARK MODE BUTTON ======== */
-.dark-toggle {
-  position: fixed;
-  top: 95px;
-  right: 20px;
-  font-size: 22px;
-  background: var(--card);
-  padding: 10px;
-  border-radius: 50%;
-  cursor: pointer;
-  backdrop-filter: var(--blur);
-  z-index: 999;
-}
+        .tiktok-badge:hover {
+            background: #333;
+            transform: translateY(-2px);
+        }
 
-/* ======== CONTAINER ======== */
-.container {
-  padding: 20px;
-}
+        /* ========== MAIN LAYOUT ========== */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
 
-/* ======== DROPDOWN ======== */
-select {
-  width: 100%;
-  padding: 14px;
-  border-radius: var(--radius);
-  border: 1px solid #ddd;
-  background: var(--card);
-  font-size: 16px;
-  backdrop-filter: var(--blur);
-}
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            width: 380px;
+            background: var(--darker-bg);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
 
-/* ======== PLACE CARDS ======== */
-.place-card {
-  background: var(--card);
-  backdrop-filter: var(--blur);
-  padding: 18px;
-  border-radius: var(--radius);
-  margin-bottom: 18px;
-}
+        .search-container {
+            position: relative;
+        }
 
-/* ======== BUTTONS ======== */
-.btn {
-  background: var(--accent);
-  color: white;
-  padding: 10px 14px;
-  border-radius: 10px;
-  display: inline-block;
-  text-decoration: none;
-  margin-top: 8px;
-}
-</style>
+        .search-box {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius);
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 3px rgba(230, 0, 18, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-gray);
+        }
+
+        /* ========== FILTERS ========== */
+        .filters-container {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-light);
+        }
+
+        .filters-container h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+        }
+
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-btn {
+            padding: 0.6rem 1.2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-btn:hover {
+            background: rgba(230, 0, 18, 0.1);
+            border-color: var(--primary-red);
+            color: var(--primary-red-light);
+        }
+
+        .filter-btn.active {
+            background: rgba(230, 0, 18, 0.2);
+            border-color: var(--primary-red);
+            color: var(--primary-red-light);
+            font-weight: 600;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: transparent;
+            border: 1px solid var(--primary-red);
+            border-radius: var(--radius);
+            color: var(--primary-red);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 0.5rem;
+        }
+
+        .reset-btn:hover {
+            background: rgba(230, 0, 18, 0.1);
+        }
+
+        /* ========== PLACES LIST ========== */
+        .places-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .places-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .places-count {
+            background: var(--primary-red);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .place-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.2rem;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .place-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(230, 0, 18, 0.3);
+            box-shadow: var(--shadow);
+        }
+
+        .place-card.active {
+            border-color: var(--primary-red);
+            background: linear-gradient(to right, rgba(230, 0, 18, 0.05), transparent);
+        }
+
+        .place-category {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .pokemon-badge {
+            background: rgba(255, 203, 5, 0.2);
+            color: #ffcb05;
+        }
+
+        .food-badge {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-yellow);
+        }
+
+        .matcha-badge {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+        }
+
+        .mochi-badge {
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--accent-purple);
+        }
+
+        .place-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+
+        .place-location {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .place-description {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .place-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-gray);
+            padding: 0.3rem 0.6rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+        }
+
+        .place-actions {
+            display: flex;
+            gap: 0.8rem;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 0.6rem;
+            background: rgba(230, 0, 18, 0.1);
+            border: 1px solid rgba(230, 0, 18, 0.3);
+            border-radius: 8px;
+            color: var(--primary-red-light);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .action-btn:hover {
+            background: rgba(230, 0, 18, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .directions-btn {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: var(--accent-green);
+        }
+
+        .directions-btn:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        /* ========== MAP ========== */
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .map-btn {
+            width: 45px;
+            height: 45px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-light);
+        }
+
+        .map-btn:hover {
+            background: var(--primary-red);
+            transform: scale(1.1);
+        }
+
+        /* ========== AFFILIATE MODAL ========== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+        }
+
+        .modal {
+            background: var(--darker-bg);
+            border-radius: var(--radius);
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(230, 0, 18, 0.3);
+        }
+
+        .modal h3 {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        .modal p {
+            color: var(--text-gray);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-btn.primary {
+            background: var(--primary-red);
+            color: white;
+        }
+
+        .modal-btn.primary:hover {
+            background: var(--primary-red-light);
+        }
+
+        .modal-btn.secondary {
+            background: transparent;
+            border: 1px solid var(--text-gray);
+            color: var(--text-gray);
+        }
+
+        .modal-btn.secondary:hover {
+            border-color: var(--text-light);
+            color: var(--text-light);
+        }
+
+        /* ========== BOTTOM BAR ========== */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(15, 23, 42, 0.95), transparent);
+            padding: 1.5rem;
+            display: flex;
+            justify-content: center;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        .bottom-buttons {
+            display: flex;
+            gap: 1rem;
+            pointer-events: auto;
+        }
+
+        .bottom-btn {
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-red-light) 100%);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(230, 0, 18, 0.3);
+        }
+
+        .bottom-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(230, 0, 18, 0.4);
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: 50vh;
+            }
+            
+            .map-container {
+                height: 60vh;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+                padding: 1rem;
+            }
+            
+            .filter-row {
+                justify-content: center;
+            }
+            
+            .bottom-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .bottom-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* ========== CUSTOM LEAFLET ========== */
+        .leaflet-popup-content {
+            font-family: inherit;
+        }
+
+        .leaflet-popup-content h3 {
+            margin-top: 0;
+            color: var(--dark-bg);
+        }
+
+        .custom-popup {
+            max-width: 280px !important;
+        }
+
+        .popup-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+        }
+
+        .popup-btn {
+            flex: 1;
+            padding: 0.4rem 0.8rem;
+            background: var(--primary-red);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .popup-btn:hover {
+            background: var(--primary-red-light);
+        }
+    </style>
 </head>
-
 <body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo-container">
+            <div class="logo">M</div>
+            <div class="header-text">
+                <h1>Japan Explorer • @Muchan_official</h1>
+                <p>Interactive guide to Japan's best food, Pokémon Centers, matcha ceremonies & viral spots</p>
+            </div>
+        </div>
+        <a href="https://tiktok.com/@Muchan_official" target="_blank" class="tiktok-badge">
+            <i class="fab fa-tiktok"></i> Follow on TikTok
+        </a>
+    </header>
 
-<header>🇯🇵 Japan by Muchan</header>
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Search -->
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchBox" class="search-box" placeholder="Search Pokémon Centers, matcha, ramen, workshops...">
+            </div>
 
-<!-- Search box -->
-<div class="search-box">
-  <input id="search" placeholder="Search: Pokémon, TeamLab, Food…" />
-</div>
+            <!-- Filters -->
+            <div class="filters-container">
+                <h3><i class="fas fa-filter"></i> Filter by Category</h3>
+                <div class="filter-row">
+                    <button class="filter-btn active" data-category="all">All Places</button>
+                    <button class="filter-btn" data-category="pokemon">Pokémon Centers</button>
+                    <button class="filter-btn" data-category="food">Food Spots</button>
+                    <button class="filter-btn" data-category="matcha">Matcha Ceremony</button>
+                </div>
+                <div class="filter-row">
+                    <button class="filter-btn" data-category="mochi">Mochi Workshop</button>
+                    <button class="filter-btn" data-category="teamlab">TeamLab</button>
+                    <button class="filter-btn" data-category="onsen">Onsen</button>
+                    <button class="filter-btn" data-category="shopping">Shopping</button>
+                </div>
+                <button id="resetFilters" class="reset-btn">
+                    <i class="fas fa-undo"></i> Reset All Filters
+                </button>
+            </div>
 
-<!-- Dark mode -->
-<div class="dark-toggle" onclick="toggleDark()">🌙</div>
+            <!-- Places List -->
+            <div class="places-list">
+                <div class="places-header">
+                    <h3><i class="fas fa-map-marker-alt"></i> Recommended Places</h3>
+                    <span id="placesCount" class="places-count">Loading...</span>
+                </div>
+                <div id="placesContainer">
+                    <!-- Places will be loaded here -->
+                </div>
+            </div>
+        </div>
 
-<!-- Map -->
-<div id="map"></div>
+        <!-- Map -->
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="map-controls">
+                <button class="map-btn" id="locateMe" title="Locate me">
+                    <i class="fas fa-location-crosshairs"></i>
+                </button>
+                <button class="map-btn" id="zoomIn" title="Zoom in">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="map-btn" id="zoomOut" title="Zoom out">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="map-btn" id="fitMarkers" title="Show all markers">
+                    <i class="fas fa-globe-asia"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
-<div class="container">
-  <select id="filter">
-    <option value="">All Categories</option>
-    <option value="pokemon">Pokémon Centers</option>
-    <option value="tealab">TeamLab</option>
-    <option value="food">Food</option>
-    <option value="matcha">Matcha Ceremony</option>
-    <option value="mochi">Mochi Workshop</option>
-    <option value="activity">Activities</option>
-  </select>
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+        <div class="bottom-buttons">
+            <button class="bottom-btn" id="shareApp">
+                <i class="fas fa-share-alt"></i> Share This Map
+            </button>
+            <button class="bottom-btn" id="saveTrip">
+                <i class="fas fa-heart"></i> Save My Trip
+            </button>
+            <button class="bottom-btn" id="getDirections">
+                <i class="fas fa-route"></i> Plan Route
+            </button>
+            <button class="bottom-btn" id="affiliateToggle">
+                <i class="fas fa-yen-sign"></i> Support Creator
+            </button>
+        </div>
+    </div>
 
-  <h2>Results</h2>
-  <div id="list"></div>
-</div>
+    <!-- Affiliate Modal -->
+    <div class="modal-overlay" id="affiliateModal">
+        <div class="modal">
+            <h3><i class="fas fa-yen-sign"></i> Support @Muchan_official</h3>
+            <p>This map is completely free to use! If you find it helpful, you can support me by:</p>
+            <ul style="color: var(--text-gray); margin-bottom: 1.5rem; padding-left: 1.5rem;">
+                <li>Using my affiliate links when booking hotels/tickets</li>
+                <li>Following me on TikTok and sharing my content</li>
+                <li>Buying merch from my recommended shops (I get a small commission)</li>
+                <li>Donating via PayPal to help maintain this map</li>
+            </ul>
+            <p style="font-size: 0.9rem; color: var(--accent-green);">
+                <i class="fas fa-check-circle"></i> All recommendations are based on personal experience
+            </p>
+            <div class="modal-buttons">
+                <button class="modal-btn primary" id="closeModal">Continue Exploring</button>
+                <button class="modal-btn secondary" onclick="window.open('https://tiktok.com/@Muchan_official', '_blank')">Visit My TikTok</button>
+            </div>
+        </div>
+    </div>
 
-<script>
-/* ======== MAP ======== */
-var map = L.map("map").setView([36.2048, 138.2529], 5);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // ========== CONFIGURATION ==========
+        const TIKTOK_HANDLE = "@Muchan_official";
+        const APP_TITLE = "Japan Explorer • @Muchan_official";
+        
+        // ========== DATA - COMPLETE JAPAN SPOTS ==========
+        const PLACES_DATA = [
+            // TOKYO AREA
+            {
+                id: 'pokecenter_tokyo_dx',
+                name: 'Pokémon Center TOKYO DX',
+                lat: 35.6695,
+                lng: 139.7626,
+                city: 'Tokyo',
+                prefecture: 'Tokyo',
+                category: 'pokemon',
+                description: 'Largest Pokémon Center in Japan with exclusive merch, booster boxes, and Pokémon Café. Must-visit for collectors!',
+                tags: ['pokemon', 'shop', 'collectibles', 'exclusive'],
+                affiliate: 'https://www.pokemoncenter-online.com/',
+                pokemon_center: true
+            },
+            {
+                id: 'pokecenter_shibuya',
+                name: 'Pokémon Center Shibuya',
+                lat: 35.6595,
+                lng: 139.7005,
+                city: 'Tokyo',
+                prefecture: 'Tokyo',
+                category: 'pokemon',
+                description: 'Huge selection of Pokémon goods in Shibuya. Great for finding rare cards and regional exclusives.',
+                tags: ['pokemon', 'shibuya', 'cards', 'merch'],
+                pokemon_center: true
+            },
+            {
+                id: 'teamlab_planets',
+                name: 'teamLab Planets TOKYO',
+                lat: 35.6261,
+                lng: 139.7817,
+                city: 'Tokyo',
+                prefecture: 'Tokyo',
+                category: 'teamlab',
+                description: 'Immersive digital art museum with water installations. Perfect for Instagram/TikTok videos!',
+                tags: ['teamlab', 'instagram', 'art', 'digital'],
+                affiliate: 'https://www.teamlab.art/tickets/'
+            },
+            {
+                id: 'sensoji_matcha',
+                name: 'Traditional Matcha Ceremony (Asakusa)',
+                lat: 35.7148,
+                lng: 139.7967,
+                city: 'Tokyo',
+                prefecture: 'Tokyo',
+                category: 'matcha',
+                description: 'Authentic matcha tea ceremony experience near Senso-ji temple. Learn from tea masters.',
+                tags: ['matcha', 'tea', 'traditional', 'cultural']
+            },
+            {
+                id: 'tsukiji_mochi',
+                name: 'Tsukiji Mochi Workshop',
+                lat: 35.6654,
+                lng: 139.7704,
+                city: 'Tokyo',
+                prefecture: 'Tokyo',
+                category: 'mochi',
+                description: 'Hands-on mochi making workshop. Make your own fresh mochi with various fillings.',
+                tags: ['mochi', 'workshop', 'hands-on', 'food']
+            },
+            {
+                id: 'ichiran_shibuya',
+                name: 'Ichiran Ramen (Shibuya)',
+                lat: 35.6590,
+                lng: 139.6993,
+                city: 'Tokyo',
+                prefecture: 'Tokyo',
+                category: 'food',
+                description: 'Famous tonkotsu ramen chain with private booths. Customize your perfect bowl.',
+                tags: ['ramen', 'tonkotsu', 'must-eat', 'iconic']
+            },
+            {
+                id: 'nakano_cards',
+                name: 'Nakano Broadway Card Shops',
+                lat: 35.7074,
+                lng: 139.6646,
+                city: 'Tokyo',
+                prefecture: 'Tokyo',
+                category: 'pokemon',
+                description: 'Paradise for Pokémon/MTG card collectors. Multiple shops with rare singles and booster boxes.',
+                tags: ['cards', 'collectibles', 'tcg', 'pokemon']
+            },
+            
+            // KYOTO AREA
+            {
+                id: 'fushimi_inari',
+                name: 'Fushimi Inari Shrine',
+                lat: 34.9671,
+                lng: 135.7727,
+                city: 'Kyoto',
+                prefecture: 'Kyoto',
+                category: 'onsen',
+                description: 'Famous thousand torii gates. Go early morning for best photos without crowds.',
+                tags: ['shrine', 'torii', 'photospot', 'hiking']
+            },
+            {
+                id: 'kyoto_matcha_ceremony',
+                name: 'Kyoto Traditional Tea Ceremony',
+                lat: 35.0116,
+                lng: 135.7681,
+                city: 'Kyoto',
+                prefecture: 'Kyoto',
+                category: 'matcha',
+                description: 'Authentic tea ceremony in historic Kyoto machiya. Includes matcha and wagashi sweets.',
+                tags: ['matcha', 'tea', 'cultural', 'traditional']
+            },
+            {
+                id: 'nishiki_market',
+                name: 'Nishiki Market Food Tour',
+                lat: 35.0050,
+                lng: 135.7647,
+                city: 'Kyoto',
+                prefecture: 'Kyoto',
+                category: 'food',
+                description: '400-year-old market with fresh seafood, pickles, street food. Try tako tamago!',
+                tags: ['market', 'streetfood', 'seafood', 'local']
+            },
+            {
+                id: 'kyoto_mochi_class',
+                name: 'Kyoto Mochi Making Class',
+                lat: 35.0037,
+                lng: 135.7788,
+                city: 'Kyoto',
+                prefecture: 'Kyoto',
+                category: 'mochi',
+                description: 'Learn traditional mochi pounding techniques. Includes green tea and all ingredients.',
+                tags: ['mochi', 'workshop', 'traditional', 'hands-on']
+            },
+            
+            // OSAKA AREA
+            {
+                id: 'dotonbori_food',
+                name: 'Dotonbori Street Food',
+                lat: 34.6687,
+                lng: 135.5011,
+                city: 'Osaka',
+                prefecture: 'Osaka',
+                category: 'food',
+                description: 'Iconic food street with takoyaki, okonomiyaki, kushikatsu. Try everything!',
+                tags: ['streetfood', 'takoyaki', 'iconic', 'nightlife']
+            },
+            {
+                id: 'universal_japan',
+                name: 'Universal Studios Japan',
+                lat: 34.6654,
+                lng: 135.4300,
+                city: 'Osaka',
+                prefecture: 'Osaka',
+                category: 'teamlab',
+                description: 'Super Nintendo World, Harry Potter, and seasonal anime attractions.',
+                tags: ['themepark', 'nintendo', 'super_mario', 'attraction'],
+                affiliate: 'https://www.usj.co.jp/tickets/'
+            },
+            {
+                id: 'pokecenter_osaka',
+                name: 'Pokémon Center Osaka',
+                lat: 34.7025,
+                lng: 135.4959,
+                city: 'Osaka',
+                prefecture: 'Osaka',
+                category: 'pokemon',
+                description: 'Kansai region flagship Pokémon store with Osaka-exclusive merchandise.',
+                tags: ['pokemon', 'osaka', 'shop', 'collectibles'],
+                pokemon_center: true
+            },
+            
+            // HOKKAIDO
+            {
+                id: 'sapporo_ramen',
+                name: 'Sapporo Ramen Alley',
+                lat: 43.0642,
+                lng: 141.3469,
+                city: 'Sapporo',
+                prefecture: 'Hokkaido',
+                category: 'food',
+                description: 'Famous miso ramen in narrow alley with tiny shops. Hokkaido butter corn ramen is must-try.',
+                tags: ['ramen', 'miso', 'hokkaido', 'winter']
+            },
+            {
+                id: 'noboribetsu_onsen',
+                name: 'Noboribetsu Hot Spring Hell Valley',
+                lat: 42.4167,
+                lng: 141.1167,
+                city: 'Noboribetsu',
+                prefecture: 'Hokkaido',
+                category: 'onsen',
+                description: 'Natural hot spring valley with multiple ryokan. Therapeutic sulfur waters.',
+                tags: ['onsen', 'hotspring', 'ryokan', 'relax']
+            },
+            
+            // HIROSHIMA
+            {
+                id: 'miyajima_matcha',
+                name: 'Miyajima Island Matcha House',
+                lat: 34.2950,
+                lng: 132.3190,
+                city: 'Miyajima',
+                prefecture: 'Hiroshima',
+                category: 'matcha',
+                description: 'Matcha with view of floating torii gate. Try matcha soft serve and warabi mochi.',
+                tags: ['matcha', 'miyajima', 'torii', 'view']
+            },
+            {
+                id: 'okonomimura',
+                name: 'Hiroshima Okonomimura',
+                lat: 34.3953,
+                lng: 132.4753,
+                city: 'Hiroshima',
+                prefecture: 'Hiroshima',
+                category: 'food',
+                description: '4-floor building dedicated to Hiroshima-style okonomiyaki. Choose from 25+ stalls.',
+                tags: ['okonomiyaki', 'hiroshima', 'local', 'must-eat']
+            },
+            
+            // FUKUOKA
+            {
+                id: 'hakata_ramen',
+                name: 'Hakata Ramen Street',
+                lat: 33.5904,
+                lng: 130.4017,
+                city: 'Fukuoka',
+                prefecture: 'Fukuoka',
+                category: 'food',
+                description: 'Birthplace of tonkotsu ramen. Rich pork bone broth with thin noodles.',
+                tags: ['ramen', 'tonkotsu', 'hakata', 'birthplace']
+            },
+            
+            // NAGOYA
+            {
+                id: 'legoland_japan',
+                name: 'LEGOLAND Japan',
+                lat: 35.0531,
+                lng: 136.8489,
+                city: 'Nagoya',
+                prefecture: 'Aichi',
+                category: 'teamlab',
+                description: 'LEGO theme park with exclusive Japan sets. Great for families.',
+                tags: ['legoland', 'family', 'themepark', 'nagoya'],
+                affiliate: 'https://www.legoland.jp/tickets/'
+            },
+            
+            // KANAZAWA
+            {
+                id: 'kanazawa_mochi',
+                name: 'Kanazawa Gold Leaf Mochi Workshop',
+                lat: 36.5613,
+                lng: 136.6562,
+                city: 'Kanazawa',
+                prefecture: 'Ishikawa',
+                category: 'mochi',
+                description: 'Make edible gold leaf mochi! Kanazawa produces 99% of Japan\'s gold leaf.',
+                tags: ['mochi', 'goldleaf', 'luxury', 'workshop']
+            },
+            
+            // LOCAL GEMS
+            {
+                id: 'local_onigiri',
+                name: 'Hidden Onigiri Shop (Tokyo)',
+                lat: 35.6768,
+                lng: 139.6504,
+                city: 'Tokyo',
+                prefecture: 'Tokyo',
+                category: 'food',
+                description: 'Tiny family-run shop with 30+ onigiri varieties. Try mentaiko and umeboshi.',
+                tags: ['onigiri', 'local', 'hidden', 'family']
+            },
+            {
+                id: 'small_matcha_shop',
+                name: 'Secret Matcha House (Kyoto Alley)',
+                lat: 35.0039,
+                lng: 135.7789,
+                city: 'Kyoto',
+                prefecture: 'Kyoto',
+                category: 'matcha',
+                description: 'Hidden tea house in Gion back alley. Matcha made from single-origin Uji leaves.',
+                tags: ['matcha', 'hidden', 'gion', 'authentic']
+            },
+            {
+                id: 'pokemon_card_cafe',
+                name: 'Pokémon Card Battle Cafe',
+                lat: 35.6586,
+                lng: 139.7015,
+                city: 'Tokyo',
+                prefecture: 'Tokyo',
+                category: 'pokemon',
+                description: 'Cafe where you can play Pokémon TCG while drinking Pokémon-themed drinks.',
+                tags: ['pokemon', 'cards', 'cafe', 'battle']
+            },
+            {
+                id: 'teamlab_kyoto_exhibit',
+                name: 'teamLab Kyoto Digital Garden',
+                lat: 35.0117,
+                lng: 135.7682,
+                city: 'Kyoto',
+                prefecture: 'Kyoto',
+                category: 'teamlab',
+                description: 'Seasonal digital art exhibition blending nature and technology in Kyoto.',
+                tags: ['teamlab', 'digital', 'art', 'seasonal']
+            },
+            {
+                id: 'mochi_festival',
+                name: 'Mochi Pounding Festival (Seasonal)',
+                lat: 35.0118,
+                lng: 135.6783,
+                city: 'Kyoto',
+                prefecture: 'Kyoto',
+                category: 'mochi',
+                description: 'Traditional mochi pounding events during New Year. Free to participate!',
+                tags: ['mochi', 'festival', 'newyear', 'free']
+            },
+            {
+                id: 'rooftop_onsen',
+                name: 'Rooftop Onsen with Tokyo View',
+                lat: 35.6895,
+                lng: 139.6917,
+                city: 'Tokyo',
+                prefecture: 'Tokyo',
+                category: 'onsen',
+                description: 'High-rise onsen with stunning Tokyo skyline views. Open late night.',
+                tags: ['onsen', 'rooftop', 'view', 'night']
+            },
+            {
+                id: 'pokemon_go_spots',
+                name: 'Best Pokémon GO Spots (Shibuya)',
+                lat: 35.6595,
+                lng: 139.7005,
+                city: 'Tokyo',
+                prefecture: 'Tokyo',
+                category: 'pokemon',
+                description: 'Shibuya Crossing has the highest Pokémon GO spawn rates and raids in Japan.',
+                tags: ['pokemon', 'pokemongo', 'shibuya', 'raids']
+            }
+        ];
 
-/* ======== DATA (Sample) ======== */
-const places = [
-  {
-    name: "Pokémon Center Shibuya",
-    lat: 35.6595,
-    lng: 139.7005,
-    category: "pokemon",
-    desc: "One of the coolest Pokémon centers!",
-  },
-  {
-    name: "TeamLab Planets Tokyo",
-    lat: 35.6434,
-    lng: 139.787,
-    category: "tealab",
-    desc: "Walk through water & digital art.",
-  },
-  {
-    name: "Dotonbori Takoyaki",
-    lat: 34.6687,
-    lng: 135.5011,
-    category: "food",
-    desc: "Osaka’s famous street food.",
-  },
-  {
-    name: "Kyoto Matcha Ceremony",
-    lat: 34.99,
-    lng: 135.78,
-    category: "matcha",
-    desc: "Traditional tea ceremony.",
-  },
-];
+        // ========== APP STATE ==========
+        let map;
+        let markers = [];
+        let filteredPlaces = [...PLACES_DATA];
+        let currentCategory = 'all';
+        let selectedPlaceId = null;
 
-/* ======== MAP MARKERS ======== */
-let markers = [];
+        // ========== INITIALIZE MAP ==========
+        function initMap() {
+            map = L.map('map').setView([36.2048, 138.2529], 5);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Add custom markers
+            addMarkersToMap();
+            
+            // Initialize UI
+            renderPlacesList();
+            updatePlacesCount();
+        }
 
-function loadMarkers(list) {
-  markers.forEach((m) => map.removeLayer(m));
-  markers = [];
+        // ========== MARKER FUNCTIONS ==========
+        function getMarkerIcon(category) {
+            const colors = {
+                pokemon: '#FFCB05',
+                food: '#F59E0B',
+                matcha: '#10B981',
+                mochi: '#8B5CF6',
+                teamlab: '#3B82F6',
+                onsen: '#06B6D4',
+                shopping: '#EC4899',
+                default: '#E60012'
+            };
+            
+            const color = colors[category] || colors.default;
+            
+            return L.divIcon({
+                html: `<div style="background: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
+                    <i class="fas fa-${getCategoryIcon(category)}"></i>
+                </div>`,
+                className: 'custom-marker',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30]
+            });
+        }
 
-  list.forEach((p) => {
-    let m = L.marker([p.lat, p.lng])
-      .addTo(map)
-      .bindPopup(`<b>${p.name}</b><br>${p.desc}`);
-    markers.push(m);
-  });
-}
+        function getCategoryIcon(category) {
+            const icons = {
+                pokemon: 'gamepad',
+                food: 'utensils',
+                matcha: 'leaf',
+                mochi: 'cookie-bite',
+                teamlab: 'palette',
+                onsen: 'hot-tub',
+                shopping: 'shopping-bag',
+                default: 'map-marker-alt'
+            };
+            return icons[category] || icons.default;
+        }
 
-/* ======== FILTER + SEARCH ======== */
-function refreshList() {
-  const q = document.getElementById("search").value.toLowerCase();
-  const cat = document.getElementById("filter").value;
+        function addMarkersToMap() {
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+            
+            // Add new markers
+            filteredPlaces.forEach(place => {
+                const marker = L.marker([place.lat, place.lng], {
+                    icon: getMarkerIcon(place.category)
+                }).addTo(map);
+                
+                // Create popup content
+                const popupContent = `
+                    <div class="custom-popup">
+                        <h3 style="margin: 0 0 8px; color: #1e293b;">${place.name}</h3>
+                        <div style="color: #64748b; font-size: 0.9rem; margin-bottom: 8px;">
+                            <i class="fas fa-map-marker-alt"></i> ${place.city}, ${place.prefecture}
+                        </div>
+                        <div style="color: #475569; font-size: 0.9rem; margin-bottom: 12px;">
+                            ${place.description}
+                        </div>
+                        <div class="popup-actions">
+                            <button onclick="openDirections(${place.lat}, ${place.lng})" class="popup-btn">
+                                <i class="fas fa-directions"></i> Directions
+                            </button>
+                            <button onclick="sharePlace('${place.id}')" class="popup-btn" style="background: #3B82F6;">
+                                <i class="fas fa-share"></i> Share
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent);
+                
+                // Add click event
+                marker.on('click', () => {
+                    selectPlace(place.id);
+                });
+                
+                markers.push(marker);
+            });
+        }
 
-  const filtered = places.filter(
-    (p) =>
-      p.name.toLowerCase().includes(q) &&
-      (cat === "" || p.category === cat)
-  );
+        // ========== UI FUNCTIONS ==========
+        function renderPlacesList() {
+            const container = document.getElementById('placesContainer');
+            container.innerHTML = '';
+            
+            filteredPlaces.forEach(place => {
+                const isActive = selectedPlaceId === place.id;
+                const card = document.createElement('div');
+                card.className = `place-card ${isActive ? 'active' : ''}`;
+                card.onclick = () => selectPlace(place.id);
+                
+                const categoryClass = `${place.category}-badge`;
+                
+                card.innerHTML = `
+                    <div class="place-category ${categoryClass}">
+                        ${place.category.toUpperCase()}
+                    </div>
+                    <h3>${place.name}</h3>
+                    <div class="place-location">
+                        <i class="fas fa-map-marker-alt"></i>
+                        ${place.city}, ${place.prefecture}
+                    </div>
+                    <p class="place-description">${place.description}</p>
+                    <div class="place-tags">
+                        ${place.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                    <div class="place-actions">
+                        <button class="action-btn directions-btn" onclick="openDirections(${place.lat}, ${place.lng}); event.stopPropagation();">
+                            <i class="fas fa-directions"></i> Directions
+                        </button>
+                        <button class="action-btn" onclick="sharePlace('${place.id}'); event.stopPropagation();">
+                            <i class="fas fa-share"></i> Share
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
 
-  loadMarkers(filtered);
+        function updatePlacesCount() {
+            document.getElementById('placesCount').textContent = `${filteredPlaces.length} places`;
+        }
 
-  const list = document.getElementById("list");
-  list.innerHTML = "";
-  filtered.forEach((p) => {
-    list.innerHTML += `
-      <div class="place-card">
-        <h3>${p.name}</h3>
-        <p>${p.desc}</p>
-        <a class="btn" href="https://maps.google.com/?q=${p.lat},${p.lng}" target="_blank">Open in Maps</a>
-      </div>
-    `;
-  });
-}
+        function selectPlace(placeId) {
+            selectedPlaceId = placeId;
+            const place = PLACES_DATA.find(p => p.id === placeId);
+            
+            if (place) {
+                // Center map on place
+                map.setView([place.lat, place.lng], 15);
+                
+                // Open popup
+                markers.forEach(marker => {
+                    if (marker.getLatLng().lat === place.lat && marker.getLatLng().lng === place.lng) {
+                        marker.openPopup();
+                    }
+                });
+                
+                // Update UI
+                renderPlacesList();
+                
+                // Scroll to card
+                const card = document.querySelector(`[onclick="selectPlace('${placeId}')"]`);
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
 
-refreshList();
+        function filterPlaces() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            
+            filteredPlaces = PLACES_DATA.filter(place => {
+                // Category filter
+                if (currentCategory !== 'all' && place.category !== currentCategory) {
+                    return false;
+                }
+                
+                // Search filter
+                if (searchTerm) {
+                    const searchText = `${place.name} ${place.city} ${place.prefecture} ${place.description} ${place.tags.join(' ')}`.toLowerCase();
+                    return searchText.includes(searchTerm);
+                }
+                
+                return true;
+            });
+            
+            addMarkersToMap();
+            renderPlacesList();
+            updatePlacesCount();
+        }
 
-document.getElementById("search").oninput = refreshList;
-document.getElementById("filter").onchange = refreshList;
+        // ========== UTILITY FUNCTIONS ==========
+        function openDirections(lat, lng) {
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=transit`;
+            window.open(url, '_blank');
+        }
 
-/* ======== DARK MODE ======== */
-function toggleDark() {
-  document.body.classList.toggle("dark");
-}
-</script>
+        function sharePlace(placeId) {
+            const place = PLACES_DATA.find(p => p.id === placeId);
+            if (!place) return;
+            
+            const text = `Check out ${place.name} in ${place.city}, Japan! Found via ${TIKTOK_HANDLE}'s Japan Explorer map.`;
+            const url = window.location.href.split('#')[0] + `#place=${placeId}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: place.name,
+                    text: text,
+                    url: url
+                });
+            } else {
+                navigator.clipboard.writeText(`${text}\n${url}`).then(() => {
+                    alert('Link copied to clipboard! Paste in TikTok or Instagram.');
+                });
+            }
+        }
 
+        function saveTrip() {
+            const tripPlaces = filteredPlaces.map(p => p.name).slice(0, 10);
+            const tripData = {
+                date: new Date().toISOString().split('T')[0],
+                places: tripPlaces,
+                total: tripPlaces.length
+            };
+            
+            localStorage.setItem('japanExplorerTrip', JSON.stringify(tripData));
+            alert(`Saved ${tripPlaces.length} places to your trip!`);
+        }
+
+        // ========== EVENT LISTENERS ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize map
+            initMap();
+            
+            // Search box
+            document.getElementById('searchBox').addEventListener('input', filterPlaces);
+            
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentCategory = this.dataset.category;
+                    filterPlaces();
+                });
+            });
+            
+            // Reset filters
+            document.getElementById('resetFilters').addEventListener('click', () => {
+                document.getElementById('searchBox').value = '';
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-category="all"]').classList.add('active');
+                currentCategory = 'all';
+                filterPlaces();
+            });
+            
+            // Map controls
+            document.getElementById('locateMe').addEventListener('click', () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        map.setView([position.coords.latitude, position.coords.longitude], 13);
+                    });
+                }
+            });
+            
+            document.getElementById('zoomIn').addEventListener('click', () => map.zoomIn());
+            document.getElementById('zoomOut').addEventListener('click', () => map.zoomOut());
+            document.getElementById('fitMarkers').addEventListener('click', () => {
+                if (filteredPlaces.length > 0) {
+                    const bounds = L.latLngBounds(filteredPlaces.map(p => [p.lat, p.lng]));
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+            });
+            
+            // Bottom buttons
+            document.getElementById('shareApp').addEventListener('click', () => {
+                const shareText = `Explore Japan with ${TIKTOK_HANDLE}'s interactive map! Food, Pokémon Centers, matcha ceremonies, and more.`;
+                const shareUrl = window.location.href;
+                
+                if (navigator.share) {
+                    navigator.share({
+                        title: APP_TITLE,
+                        text: shareText,
+                        url: shareUrl
+                    });
+                } else {
+                    navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
+                        alert('Map link copied! Share with your friends on TikTok.');
+                    });
+                }
+            });
+            
+            document.getElementById('saveTrip').addEventListener('click', saveTrip);
+            
+            document.getElementById('getDirections').addEventListener('click', () => {
+                if (filteredPlaces.length > 0) {
+                    const firstPlace = filteredPlaces[0];
+                    openDirections(firstPlace.lat, firstPlace.lng);
+                } else {
+                    alert('Filter some places first, then use this feature to plan your route!');
+                }
+            });
+            
+            document.getElementById('affiliateToggle').addEventListener('click', () => {
+                document.getElementById('affiliateModal').style.display = 'flex';
+            });
+            
+            document.getElementById('closeModal').addEventListener('click', () => {
+                document.getElementById('affiliateModal').style.display = 'none';
+            });
+            
+            // Handle hash (deep linking)
+            if (window.location.hash) {
+                const placeId = window.location.hash.replace('#place=', '');
+                if (placeId) {
+                    setTimeout(() => selectPlace(placeId), 1000);
+                }
+            }
+        });
+
+        // ========== EXPOSE FUNCTIONS ==========
+        window.openDirections = openDirections;
+        window.sharePlace = sharePlace;
+        window.selectPlace = selectPlace;
+    </script>
 </body>
 </html>
